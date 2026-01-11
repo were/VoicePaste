@@ -105,7 +105,7 @@ final class AppState {
             return
         }
 
-        guard let apiKey = KeychainStore.loadAPIKey(), !apiKey.isEmpty else {
+        guard let apiKey = APIKeyStore.loadAPIKey(), !apiKey.isEmpty else {
             showErrorAlert(message: "No API key configured. Please add your OpenAI API key in the menu bar settings.")
             scheduleOverlayHide()
             return
@@ -259,7 +259,7 @@ struct MenuContent: View {
     }
 
     private func loadAPIKey() {
-        if let key = KeychainStore.loadAPIKey(), !key.isEmpty {
+        if let key = APIKeyStore.loadAPIKey(), !key.isEmpty {
             hasAPIKey = true
             // Don't show actual key, just indicate it's set
         } else {
@@ -269,7 +269,7 @@ struct MenuContent: View {
 
     private func saveAPIKey() {
         do {
-            try KeychainStore.saveAPIKey(apiKeyInput)
+            try APIKeyStore.saveAPIKey(apiKeyInput)
             hasAPIKey = true
             apiKeyInput = ""
         } catch {
@@ -279,7 +279,7 @@ struct MenuContent: View {
 
     private func clearAPIKey() {
         do {
-            try KeychainStore.deleteAPIKey()
+            try APIKeyStore.deleteAPIKey()
             hasAPIKey = false
             apiKeyInput = ""
         } catch {
