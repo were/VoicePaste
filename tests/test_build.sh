@@ -75,5 +75,42 @@ else
     exit 1
 fi
 
+# Test 7: Verify RecordingOverlayWindow exists
+echo -n "Test 7: RecordingOverlayWindow implementation present... "
+if [ -f "$PROJECT_DIR/VoicePaste/RecordingOverlayWindow.swift" ]; then
+    if grep -q "class RecordingOverlayWindow" "$PROJECT_DIR/VoicePaste/RecordingOverlayWindow.swift"; then
+        echo "PASS"
+    else
+        echo "FAIL (file exists but missing class)"
+        exit 1
+    fi
+else
+    echo "FAIL (file not found)"
+    exit 1
+fi
+
+# Test 8: Verify RecordingOverlayView exists
+echo -n "Test 8: RecordingOverlayView implementation present... "
+if [ -f "$PROJECT_DIR/VoicePaste/RecordingOverlayView.swift" ]; then
+    if grep -q "struct RecordingOverlayView" "$PROJECT_DIR/VoicePaste/RecordingOverlayView.swift"; then
+        echo "PASS"
+    else
+        echo "FAIL (file exists but missing struct)"
+        exit 1
+    fi
+else
+    echo "FAIL (file not found)"
+    exit 1
+fi
+
+# Test 9: Verify RecordingOverlayWindow is wired in AppState
+echo -n "Test 9: RecordingOverlayWindow integrated in AppState... "
+if grep -q "RecordingOverlayWindow" "$PROJECT_DIR/VoicePaste/VoicePasteApp.swift"; then
+    echo "PASS"
+else
+    echo "FAIL"
+    exit 1
+fi
+
 echo ""
 echo "=== Build Verification Complete ==="

@@ -13,15 +13,56 @@ import AppKit
 @Observable
 final class AppState {
     var isRecording = false
+    var recordingStartTime: Date?
+    var lastRecordingDuration: TimeInterval?
+    var isShowingCompletion = false
+
     let hotkeyManager = HotkeyManager()
     private var isSetup = false
+    private var overlayHideWorkItem: DispatchWorkItem?
+    private var overlayWindow: RecordingOverlayWindow?
 
     func setup() {
         guard !isSetup else { return }
         isSetup = true
-        hotkeyManager.onRecordingStart = { [weak self] in self?.isRecording = true }
-        hotkeyManager.onRecordingStop = { [weak self] in self?.isRecording = false }
+        overlayWindow = RecordingOverlayWindow(appState: self)
+        hotkeyManager.onRecordingStart = { [weak self] in self?.handleRecordingStart() }
+        hotkeyManager.onRecordingStop = { [weak self] in self?.handleRecordingStop() }
         _ = hotkeyManager.start()
+    }
+
+    private func handleRecordingStart() {
+        // Cancel any pending hide operation
+        overlayHideWorkItem?.cancel()
+        overlayHideWorkItem = nil
+
+        // Reset state and start recording
+        isRecording = true
+        recordingStartTime = Date()
+        lastRecordingDuration = nil
+        isShowingCompletion = false
+
+        // Show overlay
+        overlayWindow?.show()
+    }
+
+    private func handleRecordingStop() {
+        // Calculate final duration
+        if let startTime = recordingStartTime {
+            lastRecordingDuration = Date().timeIntervalSince(startTime)
+        }
+
+        isRecording = false
+        recordingStartTime = nil
+        isShowingCompletion = true
+
+        // Schedule hide after showing completion
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.isShowingCompletion = false
+            self?.overlayWindow?.hide()
+        }
+        overlayHideWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: workItem)
     }
 }
 
