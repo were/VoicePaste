@@ -10,6 +10,7 @@ import SwiftUI
 
 /// A non-activating floating window that displays the recording timer overlay.
 /// Appears in the top-right corner without stealing focus from the current application.
+@MainActor
 final class RecordingOverlayWindow {
     private var panel: NSPanel?
     private weak var appState: AppState?
