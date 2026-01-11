@@ -25,8 +25,25 @@ final class RecordingOverlayWindow {
             createPanel()
         }
 
+        resizeToFitContent()
         updatePosition(preferredScreen: NSScreen.main)
         panel?.orderFrontRegardless()
+    }
+
+    /// Resizes the panel to fit the current content size.
+    private func resizeToFitContent() {
+        guard let panel = panel,
+              let hostingView = panel.contentView as? NSHostingView<RecordingOverlayView> else { return }
+
+        let fittingSize = hostingView.fittingSize
+        let currentFrame = panel.frame
+
+        // Resize keeping top-right corner position
+        let newOrigin = NSPoint(
+            x: currentFrame.maxX - fittingSize.width,
+            y: currentFrame.maxY - fittingSize.height
+        )
+        panel.setFrame(NSRect(origin: newOrigin, size: fittingSize), display: true)
     }
 
     /// Hides the overlay window.
@@ -58,9 +75,12 @@ final class RecordingOverlayWindow {
         let contentView = RecordingOverlayView(appState: appState)
         let hostingView = NSHostingView(rootView: contentView)
 
+        // Size to fit content
+        let fittingSize = hostingView.fittingSize
+
         // Create a non-activating panel
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 120, height: 50),
+            contentRect: NSRect(x: 0, y: 0, width: fittingSize.width, height: fittingSize.height),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -77,7 +97,6 @@ final class RecordingOverlayWindow {
 
         // Set content
         panel.contentView = hostingView
-        hostingView.frame = panel.contentRect(forFrameRect: panel.frame)
 
         self.panel = panel
     }
