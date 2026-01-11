@@ -45,10 +45,22 @@ final class AppState {
         overlayHideWorkItem?.cancel()
         overlayHideWorkItem = nil
 
-        // Request permission and start audio recording
+        // Reset state and start recording immediately (for UI responsiveness)
+        isRecording = true
+        recordingStartTime = Date()
+        lastRecordingDuration = nil
+        isShowingCompletion = false
+
+        // Show overlay immediately
+        overlayWindow?.show()
+
+        // Request permission and start audio recording asynchronously
         Task {
             let hasPermission = await audioRecorder.requestPermission()
             guard hasPermission else {
+                // Revert UI state on permission failure
+                isRecording = false
+                overlayWindow?.hide()
                 showErrorAlert(message: "Microphone permission denied. Please grant access in System Settings.")
                 return
             }
@@ -56,18 +68,12 @@ final class AppState {
             do {
                 lastRecordingURL = try audioRecorder.startRecording()
             } catch {
+                // Revert UI state on recording failure
+                isRecording = false
+                overlayWindow?.hide()
                 showErrorAlert(message: "Failed to start recording.")
                 return
             }
-
-            // Reset state and start recording
-            isRecording = true
-            recordingStartTime = Date()
-            lastRecordingDuration = nil
-            isShowingCompletion = false
-
-            // Show overlay
-            overlayWindow?.show()
         }
     }
 

@@ -1,8 +1,9 @@
 import AppKit
 import CoreGraphics
 import ApplicationServices
+import os.lock
 
-private enum KeyCode {
+private enum KeyCode: Sendable {
     static let leftOption: Int64 = 58
     static let rightOption: Int64 = 61
     static let space: Int64 = 49
@@ -16,8 +17,9 @@ final class HotkeyManager {
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var isOptionPressed = false
-    private var isRecording = false
+
+    // Thread-safe state using lock for access from event tap callback
+    private let stateLock = OSAllocatedUnfairLock(initialState: (isOptionPressed: false, isRecording: false))
 
     func start() -> Bool {
         guard checkAccessibilityPermission() else {
@@ -37,8 +39,10 @@ final class HotkeyManager {
         }
         eventTap = nil
         runLoopSource = nil
-        isOptionPressed = false
-        isRecording = false
+        stateLock.withLock { state in
+            state.isOptionPressed = false
+            state.isRecording = false
+        }
     }
 
     func pasteText(_ text: String) {
@@ -95,26 +99,61 @@ final class HotkeyManager {
         type: CGEventType,
         event: CGEvent
     ) -> Unmanaged<CGEvent>? {
+        // Local constants to avoid MainActor isolation warnings
+        let kLeftOption: Int64 = 58
+        let kRightOption: Int64 = 61
+        let kSpace: Int64 = 49
+
         if type == .flagsChanged {
             let flags = event.flags
             let optionPressed = flags.contains(.maskAlternate)
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
-            let isOptionKey = keyCode == KeyCode.leftOption || keyCode == KeyCode.rightOption
+            let isOptionKey = keyCode == kLeftOption || keyCode == kRightOption
 
             if isOptionKey {
-                Task { @MainActor in
-                    self.handleOptionKeyChange(pressed: optionPressed)
-                } 
+                // Update state synchronously with lock, then call handler on main actor
+                let shouldStopRecording = stateLock.withLock { state -> Bool in
+                    let wasOptionPressed = state.isOptionPressed
+                    state.isOptionPressed = optionPressed
+
+                    if wasOptionPressed && !optionPressed && state.isRecording {
+                        // Option released while recording -> stop recording
+                        state.isRecording = false
+                        return true
+                    }
+                    return false
+                }
+
+                if shouldStopRecording {
+                    Task { @MainActor in
+                        self.onRecordingStop?()
+                    }
+                }
             }
         } else if type == .keyDown {
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
-            if keyCode == KeyCode.space {
-                Task { @MainActor in
-                    self.handleSpaceKeyDown()
+            if keyCode == kSpace {
+                // Check state synchronously with lock
+                let shouldStartRecording = stateLock.withLock { state -> Bool in
+                    if state.isOptionPressed && !state.isRecording {
+                        // Option held + Space pressed -> start recording
+                        state.isRecording = true
+                        return true
+                    }
+                    return false
                 }
-                // Suppress space key when Option is held to prevent typing space
+
+                if shouldStartRecording {
+                    Task { @MainActor in
+                        self.onRecordingStart?()
+                    }
+                    // Suppress space key when starting recording
+                    return nil
+                }
+
+                // Also suppress space if Option is held but already recording
                 if event.flags.contains(.maskAlternate) {
                     return nil
                 }
@@ -122,25 +161,6 @@ final class HotkeyManager {
         }
 
         return Unmanaged.passRetained(event)
-    }
-
-    private func handleOptionKeyChange(pressed: Bool) {
-        let wasOptionPressed = isOptionPressed
-        isOptionPressed = pressed
-
-        if wasOptionPressed && !pressed && isRecording {
-            // Option released while recording -> stop recording
-            isRecording = false
-            onRecordingStop?()
-        }
-    }
-
-    private func handleSpaceKeyDown() {
-        if isOptionPressed && !isRecording {
-            // Option held + Space pressed -> start recording
-            isRecording = true
-            onRecordingStart?()
-        }
     }
 
     private func simulatePaste() {
