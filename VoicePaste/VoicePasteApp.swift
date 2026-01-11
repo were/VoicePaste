@@ -29,6 +29,9 @@ final class AppState {
 
     let hotkeyManager = HotkeyManager()
     let audioRecorder = AudioRecorder()
+    var transcriberFactory: (String) -> TranscriptionService = { apiKey in
+        OpenAITranscriber(apiKey: apiKey)
+    }
     private var isSetup = false
     private var overlayHideWorkItem: DispatchWorkItem?
     private var overlayWindow: RecordingOverlayWindow?
@@ -120,7 +123,7 @@ final class AppState {
     }
 
     private func performTranscription(fileURL: URL, apiKey: String) async {
-        let transcriber = OpenAITranscriber(apiKey: apiKey)
+        let transcriber = transcriberFactory(apiKey)
 
         do {
             let text = try await transcriber.transcribe(fileURL: fileURL)
