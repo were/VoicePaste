@@ -183,7 +183,7 @@ struct VoicePasteApp: App {
 
     var body: some Scene {
         #if os(macOS)
-        MenuBarExtra("VoicePaste", systemImage: sharedAppState.isRecording ? "mic.fill" : "mic") {
+        MenuBarExtra("VoicePaste", image: "MenuBarIcon") {
             MenuContent()
         }
         .menuBarExtraStyle(.window)
