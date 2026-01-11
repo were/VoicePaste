@@ -105,7 +105,7 @@ final class HotkeyManager {
             if isOptionKey {
                 Task { @MainActor in
                     self.handleOptionKeyChange(pressed: optionPressed)
-                }
+                } 
             }
         } else if type == .keyDown {
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
