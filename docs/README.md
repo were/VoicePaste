@@ -55,10 +55,12 @@ The API key is stored in a local file at `~/Library/Application Support/VoicePas
 ### Transcription Behavior
 
 When you release Option+Space after recording:
-1. The overlay shows "Transcribing..." while processing
+1. The overlay shows "Transcribing..." with an animated progress indicator while processing
 2. Audio is sent to OpenAI's Whisper API
 3. On success: transcript is pasted to your active application
 4. On failure: an error message is displayed
+
+The animated indicator provides visual feedback that transcription is in progress, improving perceived latency during API calls.
 
 **Common errors:**
 - Missing API key: Configure your key in the menu bar settings
@@ -116,3 +118,14 @@ The window:
 - [ ] Confirm the current application retains focus (window does not steal focus)
 - [ ] Release Option+Space and verify the final duration is displayed briefly
 - [ ] Confirm the timer window fades out and disappears after recording stops
+
+## Future Work
+
+### Streaming Transcription (Experimental)
+
+Full real-time streaming transcription using OpenAI's Realtime API is considered experimental and gated on:
+
+1. **Verified Documentation**: Official OpenAI Realtime transcription documentation must be confirmed
+2. **Proof of Concept**: A minimal POC must demonstrate working streaming transcription before any integration
+
+The current batch Whisper workflow provides reliable transcription with the animated progress indicator for feedback. Streaming integration would require significant changes (~850+ LOC) including AVAudioEngine, audio resampling, WebSocket handling, and delta event processing.
