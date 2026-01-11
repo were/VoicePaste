@@ -1,0 +1,6 @@
+project:
+  name: VoicePaste
+git:
+  default_branch: main
+agentize:
+  commit: 22d306da040c939a199d522615e3dec5cdbff050
