@@ -18,30 +18,38 @@ struct RecordingOverlayView: View {
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        Text(displayText)
-            .font(.system(size: 24, weight: .medium, design: appState.isTranscribing ? .default : .monospaced))
-            .foregroundColor(.white)
-            .frame(minWidth: 140)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.black.opacity(0.75))
-            )
-            .fixedSize()
-            .opacity(opacity)
-            .onReceive(timer) { _ in
-                updateTimer()
+        HStack(spacing: 8) {
+            if appState.isTranscribing {
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .scaleEffect(0.8)
+                    .colorInvert()
             }
-            .onChange(of: appState.isRecording) { _, isRecording in
-                handleRecordingChange(isRecording: isRecording)
-            }
-            .onChange(of: appState.isTranscribing) { _, isTranscribing in
-                handleTranscribingChange(isTranscribing: isTranscribing)
-            }
-            .onChange(of: appState.isShowingCompletion) { _, isShowingCompletion in
-                handleCompletionChange(isShowingCompletion: isShowingCompletion)
-            }
+            Text(displayText)
+                .font(.system(size: 24, weight: .medium, design: appState.isTranscribing ? .default : .monospaced))
+                .foregroundColor(.white)
+        }
+        .frame(minWidth: 140)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.black.opacity(0.75))
+        )
+        .fixedSize()
+        .opacity(opacity)
+        .onReceive(timer) { _ in
+            updateTimer()
+        }
+        .onChange(of: appState.isRecording) { _, isRecording in
+            handleRecordingChange(isRecording: isRecording)
+        }
+        .onChange(of: appState.isTranscribing) { _, isTranscribing in
+            handleTranscribingChange(isTranscribing: isTranscribing)
+        }
+        .onChange(of: appState.isShowingCompletion) { _, isShowingCompletion in
+            handleCompletionChange(isShowingCompletion: isShowingCompletion)
+        }
     }
 
     private var displayText: String {

@@ -15,8 +15,19 @@ enum TranscriptionError: Error {
     case fileTooLarge
 }
 
+/// Protocol for transcription services, enabling future streaming implementations.
+protocol TranscriptionService {
+    func transcribe(fileURL: URL, model: String) async throws -> String
+}
+
+extension TranscriptionService {
+    func transcribe(fileURL: URL) async throws -> String {
+        try await transcribe(fileURL: fileURL, model: "whisper-1")
+    }
+}
+
 /// OpenAI Whisper transcription client.
-final class OpenAITranscriber {
+final class OpenAITranscriber: TranscriptionService {
     private let apiKey: String
     private let endpoint = "https://api.openai.com/v1/audio/transcriptions"
     private let maxFileSize: Int64 = 25 * 1024 * 1024 // 25MB limit
