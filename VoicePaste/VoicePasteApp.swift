@@ -212,27 +212,27 @@ struct MenuContent: View {
             Text("OpenAI API Key")
                 .font(.headline)
 
-            HStack {
-                SecureField("sk-...", text: $apiKeyInput)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 200)
+            SecureField("sk-...", text: $apiKeyInput)
+                .textFieldStyle(.roundedBorder)
 
+            HStack {
                 Button("Save") {
                     saveAPIKey()
                 }
                 .disabled(apiKeyInput.isEmpty)
 
-                if hasAPIKey {
-                    Button("Clear") {
-                        clearAPIKey()
-                    }
+                Button("Clear") {
+                    clearAPIKey()
                 }
-            }
+                .disabled(!hasAPIKey)
 
-            if hasAPIKey {
-                Text("API key saved")
-                    .font(.caption)
-                    .foregroundColor(.green)
+                Spacer()
+
+                if hasAPIKey {
+                    Text("Saved")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
             }
 
             Divider()
@@ -242,7 +242,7 @@ struct MenuContent: View {
             }
         }
         .padding()
-        .frame(width: 320)
+        .frame(width: 260)
         .onAppear {
             loadAPIKey()
         }
