@@ -242,7 +242,7 @@ struct MenuContent: View {
             }
         }
         .padding()
-        .frame(width: 280)
+        .frame(width: 320)
         .onAppear {
             loadAPIKey()
         }
