@@ -1,0 +1,2 @@
+- Read `./docs/README.md` for the goal of this repository.
+- This project is purely written in `Swift`, the native language for Mac OS UI.
