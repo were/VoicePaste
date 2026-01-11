@@ -35,5 +35,45 @@ else
     exit 1
 fi
 
+# Test 3: Verify entitlements file exists
+echo -n "Test 3: Entitlements file exists... "
+if [ -f "$PROJECT_DIR/VoicePaste/VoicePaste.entitlements" ]; then
+    echo "PASS"
+else
+    echo "FAIL"
+    exit 1
+fi
+
+# Test 4: Verify Info.plist exists
+echo -n "Test 4: Info.plist file exists... "
+if [ -f "$PROJECT_DIR/VoicePaste/Info.plist" ]; then
+    echo "PASS"
+else
+    echo "FAIL"
+    exit 1
+fi
+
+# Test 5: Verify HotkeyManager exists (when implemented)
+echo -n "Test 5: HotkeyManager implementation present... "
+if [ -f "$PROJECT_DIR/VoicePaste/HotkeyManager.swift" ]; then
+    if grep -q "class HotkeyManager" "$PROJECT_DIR/VoicePaste/HotkeyManager.swift"; then
+        echo "PASS"
+    else
+        echo "FAIL (file exists but missing class)"
+        exit 1
+    fi
+else
+    echo "SKIP (not yet implemented)"
+fi
+
+# Test 6: Verify sandbox is disabled in project
+echo -n "Test 6: App sandbox disabled... "
+if grep -q "ENABLE_APP_SANDBOX = NO" "$PROJECT_FILE/project.pbxproj"; then
+    echo "PASS"
+else
+    echo "FAIL"
+    exit 1
+fi
+
 echo ""
 echo "=== Build Verification Complete ==="
