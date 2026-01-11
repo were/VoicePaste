@@ -22,12 +22,18 @@ final class HotkeyManager {
     private let stateLock = OSAllocatedUnfairLock(initialState: (isOptionPressed: false, isRecording: false))
 
     func start() -> Bool {
-        guard checkAccessibilityPermission() else {
+        let hasAccessibility = checkAccessibilityPermission()
+        print("[HotkeyManager] Accessibility permission: \(hasAccessibility)")
+
+        guard hasAccessibility else {
+            print("[HotkeyManager] Opening accessibility settings...")
             openAccessibilitySettings()
             return false
         }
 
-        return setupEventTap()
+        let tapCreated = setupEventTap()
+        print("[HotkeyManager] Event tap created: \(tapCreated)")
+        return tapCreated
     }
 
     func stop() {
@@ -116,10 +122,12 @@ final class HotkeyManager {
                 let shouldStopRecording = stateLock.withLock { state -> Bool in
                     let wasOptionPressed = state.isOptionPressed
                     state.isOptionPressed = optionPressed
+                    print("[HotkeyManager] Option key: \(optionPressed ? "pressed" : "released")")
 
                     if wasOptionPressed && !optionPressed && state.isRecording {
                         // Option released while recording -> stop recording
                         state.isRecording = false
+                        print("[HotkeyManager] Stopping recording (option released)")
                         return true
                     }
                     return false
@@ -137,9 +145,11 @@ final class HotkeyManager {
             if keyCode == kSpace {
                 // Check state synchronously with lock
                 let shouldStartRecording = stateLock.withLock { state -> Bool in
+                    print("[HotkeyManager] Space pressed, optionHeld=\(state.isOptionPressed), isRecording=\(state.isRecording)")
                     if state.isOptionPressed && !state.isRecording {
                         // Option held + Space pressed -> start recording
                         state.isRecording = true
+                        print("[HotkeyManager] Starting recording")
                         return true
                     }
                     return false
