@@ -11,7 +11,7 @@ neither accurate nor language-mixing-friendly.
 - Menu bar indicator shows VoicePaste is running (macOS only)
 - Floating timer window shows recording duration in top-right corner
 - Settings UI in menu bar for API key configuration
-- Secure API key storage via macOS Keychain
+- Local file-based API key storage in Application Support
 
 ## Permissions
 
@@ -46,9 +46,11 @@ VoicePaste requires an OpenAI API key for transcription:
 1. Get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
 2. Click the VoicePaste menu bar icon
 3. Enter your API key in the settings field
-4. Click "Save" to store securely in Keychain
+4. Click "Save" to store locally
 
-The API key is stored securely using the macOS Keychain. You can clear the key at any time using the "Clear" button in settings.
+The API key is stored in a local file at `~/Library/Application Support/VoicePaste/api_key` with owner-only read/write permissions. You can clear the key at any time using the "Clear" button in settings.
+
+**Security Note:** The API key is stored in plaintext on disk. This trade-off eliminates repeated Keychain permission prompts while maintaining a simple user experience. The file is protected with restrictive permissions (owner read/write only).
 
 ### Transcription Behavior
 
