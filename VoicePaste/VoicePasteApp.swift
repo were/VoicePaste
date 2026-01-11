@@ -24,6 +24,8 @@ final class AppState {
     var lastRecordingDuration: TimeInterval?
     var isShowingCompletion = false
     var lastRecordingURL: URL?
+    var isTranscribing = false
+    var transcriptionError: String?
 
     let hotkeyManager = HotkeyManager()
     let audioRecorder = AudioRecorder()
@@ -95,11 +97,65 @@ final class AppState {
 
         isRecording = false
         recordingStartTime = nil
-        isShowingCompletion = true
 
-        // Schedule hide after showing completion
+        // Start transcription
+        guard let recordingURL = lastRecordingURL else {
+            isShowingCompletion = true
+            scheduleOverlayHide()
+            return
+        }
+
+        guard let apiKey = KeychainStore.loadAPIKey(), !apiKey.isEmpty else {
+            showErrorAlert(message: "No API key configured. Please add your OpenAI API key in the menu bar settings.")
+            scheduleOverlayHide()
+            return
+        }
+
+        isTranscribing = true
+        transcriptionError = nil
+
+        Task {
+            await performTranscription(fileURL: recordingURL, apiKey: apiKey)
+        }
+    }
+
+    private func performTranscription(fileURL: URL, apiKey: String) async {
+        let transcriber = OpenAITranscriber(apiKey: apiKey)
+
+        do {
+            let text = try await transcriber.transcribe(fileURL: fileURL)
+            isTranscribing = false
+            isShowingCompletion = true
+            hotkeyManager.pasteText(text)
+            scheduleOverlayHide()
+        } catch {
+            isTranscribing = false
+            transcriptionError = errorMessage(for: error)
+            showErrorAlert(message: transcriptionError ?? "Transcription failed.")
+            scheduleOverlayHide()
+        }
+    }
+
+    private func errorMessage(for error: Error) -> String {
+        if let transcriptionError = error as? TranscriptionError {
+            switch transcriptionError {
+            case .fileTooLarge:
+                return "Audio file exceeds 25MB limit."
+            case .apiError(let message):
+                return "API error: \(message)"
+            case .networkError:
+                return "Network error. Check your connection."
+            case .invalidURL, .invalidResponse:
+                return "Invalid response from server."
+            }
+        }
+        return "Transcription failed: \(error.localizedDescription)"
+    }
+
+    private func scheduleOverlayHide() {
         let workItem = DispatchWorkItem { [weak self] in
             self?.isShowingCompletion = false
+            self?.transcriptionError = nil
             self?.overlayWindow?.hide()
         }
         overlayHideWorkItem = workItem
@@ -141,11 +197,93 @@ struct VoicePasteApp: App {
 
 #if os(macOS)
 struct MenuContent: View {
+    @State private var apiKeyInput: String = ""
+    @State private var hasAPIKey: Bool = false
+
     var body: some View {
-        Text(sharedAppState.isRecording ? "Recording..." : "VoicePaste is running")
-        Divider()
-        Button("Quit") {
-            NSApplication.shared.terminate(nil)
+        VStack(alignment: .leading, spacing: 12) {
+            // Status
+            Text(statusText)
+                .foregroundColor(.secondary)
+
+            Divider()
+
+            // API Key Settings
+            Text("OpenAI API Key")
+                .font(.headline)
+
+            HStack {
+                SecureField("sk-...", text: $apiKeyInput)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 200)
+
+                Button("Save") {
+                    saveAPIKey()
+                }
+                .disabled(apiKeyInput.isEmpty)
+
+                if hasAPIKey {
+                    Button("Clear") {
+                        clearAPIKey()
+                    }
+                }
+            }
+
+            if hasAPIKey {
+                Text("API key saved")
+                    .font(.caption)
+                    .foregroundColor(.green)
+            }
+
+            Divider()
+
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
+        }
+        .padding()
+        .frame(width: 280)
+        .onAppear {
+            loadAPIKey()
+        }
+    }
+
+    private var statusText: String {
+        if sharedAppState.isTranscribing {
+            return "Transcribing..."
+        } else if sharedAppState.isRecording {
+            return "Recording..."
+        } else {
+            return "VoicePaste is running"
+        }
+    }
+
+    private func loadAPIKey() {
+        if let key = KeychainStore.loadAPIKey(), !key.isEmpty {
+            hasAPIKey = true
+            // Don't show actual key, just indicate it's set
+        } else {
+            hasAPIKey = false
+        }
+    }
+
+    private func saveAPIKey() {
+        do {
+            try KeychainStore.saveAPIKey(apiKeyInput)
+            hasAPIKey = true
+            apiKeyInput = ""
+        } catch {
+            print("[MenuContent] Failed to save API key: \(error)")
+        }
+    }
+
+    private func clearAPIKey() {
+        do {
+            try KeychainStore.deleteAPIKey()
+            hasAPIKey = false
+            apiKeyInput = ""
+        } catch {
+            print("[MenuContent] Failed to clear API key: \(error)")
         }
     }
 }

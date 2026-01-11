@@ -1,4 +1,4 @@
-                           //
+//
 //  RecordingOverlayView.swift
 //  VoicePaste
 //
@@ -18,7 +18,7 @@ struct RecordingOverlayView: View {
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        Text(formattedTime)
+        Text(displayText)
             .font(.system(size: 24, weight: .medium, design: .monospaced))
             .foregroundColor(.white)
             .padding(.horizontal, 16)
@@ -34,9 +34,19 @@ struct RecordingOverlayView: View {
             .onChange(of: appState.isRecording) { _, isRecording in
                 handleRecordingChange(isRecording: isRecording)
             }
+            .onChange(of: appState.isTranscribing) { _, isTranscribing in
+                handleTranscribingChange(isTranscribing: isTranscribing)
+            }
             .onChange(of: appState.isShowingCompletion) { _, isShowingCompletion in
                 handleCompletionChange(isShowingCompletion: isShowingCompletion)
             }
+    }
+
+    private var displayText: String {
+        if appState.isTranscribing {
+            return "Transcribing..."
+        }
+        return formattedTime
     }
 
     private var formattedTime: String {
@@ -69,8 +79,15 @@ struct RecordingOverlayView: View {
         }
     }
 
+    private func handleTranscribingChange(isTranscribing: Bool) {
+        if isTranscribing {
+            // Keep visible during transcription
+            opacity = 1.0
+        }
+    }
+
     private func handleCompletionChange(isShowingCompletion: Bool) {
-        if !isShowingCompletion && !appState.isRecording {
+        if !isShowingCompletion && !appState.isRecording && !appState.isTranscribing {
             // Fade out when completion display ends
             withAnimation(.easeOut(duration: 0.3)) {
                 opacity = 0.0
