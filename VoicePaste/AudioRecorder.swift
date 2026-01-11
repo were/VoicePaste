@@ -44,6 +44,7 @@ final class AudioRecorder {
         }
 
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("voicepaste_recording.wav")
+        print("[AudioRecorder] Recording to: \(url.path)")
 
         // Whisper-optimized settings: 16kHz mono 16-bit PCM
         let settings: [String: Any] = [
@@ -75,6 +76,12 @@ final class AudioRecorder {
         recorder.stop()
         audioRecorder = nil
         recordingURL = nil
+
+        // Log file info
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+           let size = attrs[.size] as? Int64 {
+            print("[AudioRecorder] Saved: \(url.path) (\(size) bytes)")
+        }
 
         return url
     }
