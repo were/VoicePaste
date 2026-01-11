@@ -9,6 +9,12 @@ import SwiftUI
 #if os(macOS)
 import AppKit
 
+class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        sharedAppState.setup()
+    }
+}
+
 @MainActor
 @Observable
 final class AppState {
@@ -71,6 +77,10 @@ private let sharedAppState = AppState()
 
 @main
 struct VoicePasteApp: App {
+    #if os(macOS)
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    #endif
+
     var body: some Scene {
         #if os(macOS)
         MenuBarExtra("VoicePaste", systemImage: sharedAppState.isRecording ? "mic.fill" : "mic") {
@@ -89,9 +99,6 @@ struct VoicePasteApp: App {
 struct MenuContent: View {
     var body: some View {
         Text(sharedAppState.isRecording ? "Recording..." : "VoicePaste is running")
-            .onAppear {
-                sharedAppState.setup()
-            }
         Divider()
         Button("Quit") {
             NSApplication.shared.terminate(nil)
