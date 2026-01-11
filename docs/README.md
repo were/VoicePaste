@@ -10,6 +10,7 @@ neither accurate nor language-mixing-friendly.
 - Once reponded, the transcript is injected to your pasteboard
 - And it automatically `<Cmd> + <V>` to paste it to the current focused app
 - Menu bar indicator shows VoicePaste is running (macOS only)
+- Floating timer window shows recording duration in top-right corner
 
 ## Permissions
 
@@ -46,3 +47,21 @@ On macOS, VoicePaste displays a mic icon in the menu bar to confirm the app is r
 - [ ] Click the menu bar icon to open the menu
 - [ ] Verify "VoicePaste is running" status text is displayed
 - [ ] Use Quit menu item to exit the app
+
+## Floating Timer Window
+
+When you press Option+Space to start recording, a floating timer window appears in the top-right corner of your screen. The timer displays the recording duration in mm:ss format and updates every second.
+
+The window:
+- Appears without stealing focus from your current application
+- Shows real-time duration while recording
+- Displays the final duration briefly when recording stops
+- Fades out automatically after recording ends
+
+### Manual Verification Checklist
+
+- [ ] Press Option+Space and confirm the timer window appears in the top-right corner
+- [ ] Verify the timer starts at 00:00 and increments every second
+- [ ] Confirm the current application retains focus (window does not steal focus)
+- [ ] Release Option+Space and verify the final duration is displayed briefly
+- [ ] Confirm the timer window fades out and disappears after recording stops
