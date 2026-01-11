@@ -25,8 +25,10 @@ Required for detecting Option+Space hotkey. Grant via:
 **System Settings → Privacy & Security → Input Monitoring → VoicePaste**
 
 ### Microphone Permission
-Required for voice recording (future feature). Grant via:
+Required for voice recording. Grant via:
 **System Settings → Privacy & Security → Microphone → VoicePaste**
+
+The app will request microphone permission on your first recording attempt. If denied, an error alert will be shown.
 
 **Note:** If permissions are not granted, VoicePaste will prompt you to open System Settings. You may need to restart the app after granting permissions.
 
@@ -47,6 +49,23 @@ On macOS, VoicePaste displays a mic icon in the menu bar to confirm the app is r
 - [ ] Click the menu bar icon to open the menu
 - [ ] Verify "VoicePaste is running" status text is displayed
 - [ ] Use Quit menu item to exit the app
+
+## Audio Recording
+
+VoicePaste records audio in a format optimized for OpenAI's Whisper transcription:
+- **Format:** WAV (PCM)
+- **Sample Rate:** 16kHz
+- **Channels:** Mono
+- **Bit Depth:** 16-bit
+
+When you hold Option+Space, the app:
+1. Requests microphone permission if not already granted
+2. Starts recording to a temporary WAV file
+3. Shows the recording overlay and timer
+4. Stops recording when you release the keys
+5. Saves the audio file for transcription
+
+The temporary recording file is automatically replaced on each new recording.
 
 ## Floating Timer Window
 
