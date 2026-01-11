@@ -6,11 +6,12 @@ neither accurate nor language-mixing-friendly.
 ## Features
 
 - Type and hold `<Option> + <Space>` to start recording
-- When released, the audio is sent to OpenAI's Whisper model
-- Once reponded, the transcript is injected to your pasteboard
-- And it automatically `<Cmd> + <V>` to paste it to the current focused app
+- When released, the audio is sent to OpenAI's Whisper model for transcription
+- Once transcribed, the text is automatically pasted into your current focused app
 - Menu bar indicator shows VoicePaste is running (macOS only)
 - Floating timer window shows recording duration in top-right corner
+- Settings UI in menu bar for API key configuration
+- Secure API key storage via macOS Keychain
 
 ## Permissions
 
@@ -38,6 +39,31 @@ The app will request microphone permission on your first recording attempt. If d
 - **Permission persistence**: If Accessibility or Input Monitoring permissions are revoked while the app is running, the hotkey listener will stop working. Restart the app after re-granting permissions.
 - **Paste simulation**: Some apps may not respond to simulated Cmd+V events (rare). In such cases, manually paste from clipboard.
 
+## API Key Setup
+
+VoicePaste requires an OpenAI API key for transcription:
+
+1. Get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Click the VoicePaste menu bar icon
+3. Enter your API key in the settings field
+4. Click "Save" to store securely in Keychain
+
+The API key is stored securely using the macOS Keychain. You can clear the key at any time using the "Clear" button in settings.
+
+### Transcription Behavior
+
+When you release Option+Space after recording:
+1. The overlay shows "Transcribing..." while processing
+2. Audio is sent to OpenAI's Whisper API
+3. On success: transcript is pasted to your active application
+4. On failure: an error message is displayed
+
+**Common errors:**
+- Missing API key: Configure your key in the menu bar settings
+- Invalid API key: Check your key is correct and has available credits
+- Network failure: Check your internet connection
+- Audio too large: Whisper has a 25MB file size limit
+
 ## Menu Bar Indicator
 
 On macOS, VoicePaste displays a mic icon in the menu bar to confirm the app is running. The app runs as an agent (no Dock icon) with a minimal menu containing status text and Quit option.
@@ -48,6 +74,10 @@ On macOS, VoicePaste displays a mic icon in the menu bar to confirm the app is r
 - [ ] Confirm no Dock icon appears (LSUIElement enabled)
 - [ ] Click the menu bar icon to open the menu
 - [ ] Verify "VoicePaste is running" status text is displayed
+- [ ] Verify API key input field is displayed
+- [ ] Enter an API key and click Save
+- [ ] Quit and relaunch app, verify key is persisted
+- [ ] Click Clear to remove the API key
 - [ ] Use Quit menu item to exit the app
 
 ## Audio Recording

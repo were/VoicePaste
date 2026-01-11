@@ -11,4 +11,4 @@ Build and feature verification tests for VoicePaste.
 ## Test Files
 
 - `test_build.sh` - Verifies macOS build succeeds and all components are present
-- `test_permissions.sh` - Manual verification guide for permissions and hotkey functionality
+- `test_permissions.sh` - Manual verification guide for permissions, hotkey, API key, and transcription functionality
