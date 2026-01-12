@@ -293,9 +293,24 @@ struct MenuContent: View {
             Text("Transcription Prompt")
                 .font(.headline)
 
-            TextField("Names, terms to improve accuracy...", text: $transcriptionPrompt, axis: .vertical)
-                .textFieldStyle(.roundedBorder)
-                .lineLimit(1...8)
+            ZStack(alignment: .topLeading) {
+                if transcriptionPrompt.isEmpty {
+                    Text("Names, terms to improve accuracy...")
+                        .foregroundColor(.gray.opacity(0.6))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 8)
+                }
+                TextEditor(text: $transcriptionPrompt)
+                    .font(.body)
+                    .scrollContentBackground(.hidden)
+            }
+            .frame(minHeight: 60, maxHeight: 120)
+            .background(Color(NSColor.textBackgroundColor))
+            .cornerRadius(5)
+            .overlay(
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+            )
 
             HStack {
                 Button("Save") {
