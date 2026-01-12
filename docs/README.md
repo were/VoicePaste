@@ -110,6 +110,7 @@ The window:
 - Shows real-time duration while recording
 - Displays the final duration briefly when recording stops
 - Fades out automatically after recording ends
+- Re-anchors to screen edge when content changes (e.g., switching to "Transcribing...")
 
 ### Manual Verification Checklist
 
@@ -117,6 +118,7 @@ The window:
 - [ ] Verify the timer starts at 00:00 and increments every second
 - [ ] Confirm the current application retains focus (window does not steal focus)
 - [ ] Release Option+Space and verify the final duration is displayed briefly
+- [ ] Verify "Transcribing..." overlay is fully visible and not truncated at screen edge
 - [ ] Confirm the timer window fades out and disappears after recording stops
 
 ## Future Work
