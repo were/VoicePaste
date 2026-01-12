@@ -29,7 +29,7 @@ Required for detecting Option+Space hotkey. Grant via:
 Required for voice recording. Grant via:
 **System Settings → Privacy & Security → Microphone → VoicePaste**
 
-The app will request microphone permission on your first recording attempt. If denied, an error alert will be shown.
+The app will request microphone permission on your first recording attempt. If denied, a "Microphone Access Required" dialog will appear with an "Open System Settings" button that takes you directly to the Microphone privacy pane (or Privacy & Security if unavailable).
 
 **Note:** If permissions are not granted, VoicePaste will prompt you to open System Settings. You may need to restart the app after granting permissions.
 
