@@ -250,7 +250,12 @@ struct MenuContent: View {
     @State private var apiKeyInput: String = ""
     @State private var hasAPIKey: Bool = false
     @State private var transcriptionPrompt: String = ""
+    @State private var savedPrompt: String = ""
     @State private var hasPrompt: Bool = false
+
+    private var isPromptModified: Bool {
+        transcriptionPrompt != savedPrompt
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -325,7 +330,11 @@ struct MenuContent: View {
 
                 Spacer()
 
-                if hasPrompt {
+                if isPromptModified {
+                    Text("Modified")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                } else if hasPrompt {
                     Text("Saved")
                         .font(.caption)
                         .foregroundColor(.green)
@@ -388,9 +397,11 @@ struct MenuContent: View {
     private func loadPrompt() {
         if let prompt = APIKeyStore.loadPrompt(), !prompt.isEmpty {
             transcriptionPrompt = prompt
+            savedPrompt = prompt
             hasPrompt = true
         } else {
             transcriptionPrompt = ""
+            savedPrompt = ""
             hasPrompt = false
         }
     }
@@ -398,6 +409,7 @@ struct MenuContent: View {
     private func savePrompt() {
         do {
             try APIKeyStore.savePrompt(transcriptionPrompt)
+            savedPrompt = transcriptionPrompt
             hasPrompt = !transcriptionPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         } catch {
             print("[MenuContent] Failed to save prompt: \(error)")
@@ -409,6 +421,7 @@ struct MenuContent: View {
             try APIKeyStore.deletePrompt()
             hasPrompt = false
             transcriptionPrompt = ""
+            savedPrompt = ""
         } catch {
             print("[MenuContent] Failed to clear prompt: \(error)")
         }
