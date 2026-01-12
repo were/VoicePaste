@@ -295,7 +295,7 @@ struct MenuContent: View {
 
             TextField("Names, terms to improve accuracy...", text: $transcriptionPrompt, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
-                .lineLimit(1...3)
+                .lineLimit(1...8)
 
             HStack {
                 Button("Save") {
