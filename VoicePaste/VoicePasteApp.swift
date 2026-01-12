@@ -66,7 +66,14 @@ final class AppState {
                 // Revert UI state on permission failure
                 isRecording = false
                 overlayWindow?.hide()
-                showErrorAlert(message: "Microphone permission denied. Please grant access in System Settings.")
+                showErrorAlert(
+                    message: "VoicePaste needs microphone access to record audio. Click 'Open System Settings' to grant permission.",
+                    title: "Microphone Access Required",
+                    actionButton: (title: "Open System Settings", handler: { [weak self] in
+                        self?.openMicrophoneSettings()
+                    }),
+                    cancelTitle: "Cancel"
+                )
                 return
             }
 
@@ -170,13 +177,41 @@ final class AppState {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: workItem)
     }
 
-    private func showErrorAlert(message: String) {
+    private func showErrorAlert(
+        message: String,
+        title: String = "VoicePaste Error",
+        actionButton: (title: String, handler: () -> Void)? = nil,
+        cancelTitle: String = "OK"
+    ) {
         let alert = NSAlert()
-        alert.messageText = "VoicePaste Error"
+        alert.messageText = title
         alert.informativeText = message
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
+
+        if let action = actionButton {
+            alert.addButton(withTitle: action.title)
+            alert.addButton(withTitle: cancelTitle)
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                action.handler()
+            }
+        } else {
+            alert.addButton(withTitle: cancelTitle)
+            alert.runModal()
+        }
+    }
+
+    private func openMicrophoneSettings() {
+        // Try to open Microphone privacy pane directly
+        let microphoneURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!
+
+        if NSWorkspace.shared.open(microphoneURL) {
+            return
+        }
+
+        // Fallback to Privacy & Security pane
+        let privacyURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy")!
+        NSWorkspace.shared.open(privacyURL)
     }
 }
 
