@@ -61,15 +61,21 @@ final class AppState {
 
         // Request permission and start audio recording asynchronously
         Task {
+            print("[AppState] Requesting microphone permission...")
             let hasPermission = await audioRecorder.requestPermission()
+            print("[AppState] Microphone permission result: \(hasPermission)")
+
             guard hasPermission else {
                 // Revert UI state on permission failure
+                print("[AppState] Showing microphone access required dialog")
                 isRecording = false
                 overlayWindow?.hide()
+                showErrorAlert(message: "Microphone permission denied. Please grant access in System Settings.")
                 showErrorAlert(
                     message: "VoicePaste needs microphone access to record audio. Click 'Open System Settings' to grant permission.",
                     title: "Microphone Access Required",
                     actionButton: (title: "Open System Settings", handler: { [weak self] in
+                        print("[AppState] Opening microphone settings")
                         self?.openMicrophoneSettings()
                     }),
                     cancelTitle: "Cancel"
