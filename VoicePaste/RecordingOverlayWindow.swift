@@ -51,12 +51,19 @@ final class RecordingOverlayWindow {
         panel?.orderOut(nil)
     }
 
+    /// Refreshes the layout by resizing to fit content and re-anchoring to screen edge.
+    /// Call this when content changes (e.g., switching to "Transcribing...").
+    func refreshLayout() {
+        resizeToFitContent()
+        updatePosition(preferredScreen: panel?.screen)
+    }
+
     /// Updates the window position to the top-right corner of the specified screen.
     func updatePosition(preferredScreen: NSScreen?) {
         guard let panel = panel else { return }
 
-        // Use the screen containing the mouse cursor, falling back to main screen
-        let screen = screenContainingMouse() ?? preferredScreen ?? NSScreen.main
+        // Prefer provided screen, then screen containing mouse, then main screen
+        let screen = preferredScreen ?? screenContainingMouse() ?? NSScreen.main
         guard let screenFrame = screen?.visibleFrame else { return }
 
         let windowSize = panel.frame.size

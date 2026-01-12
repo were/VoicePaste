@@ -117,6 +117,11 @@ final class AppState {
         isTranscribing = true
         transcriptionError = nil
 
+        // Re-anchor overlay on next run loop after SwiftUI layout updates
+        DispatchQueue.main.async { [weak self] in
+            self?.overlayWindow?.refreshLayout()
+        }
+
         Task {
             await performTranscription(fileURL: recordingURL, apiKey: apiKey)
         }
