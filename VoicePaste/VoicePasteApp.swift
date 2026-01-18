@@ -29,8 +29,8 @@ final class AppState {
 
     let hotkeyManager = HotkeyManager()
     let audioRecorder = AudioRecorder()
-    var transcriberFactory: (String) -> TranscriptionService = { apiKey in
-        OpenAITranscriber(apiKey: apiKey)
+    var transcriberFactory: (String, String?) -> TranscriptionService = { apiKey, prompt in
+        OpenAITranscriber(apiKey: apiKey, prompt: prompt)
     }
     private var isSetup = false
     private var overlayHideWorkItem: DispatchWorkItem?
@@ -135,13 +135,14 @@ final class AppState {
             self?.overlayWindow?.refreshLayout()
         }
 
+        let prompt = APIKeyStore.loadPrompt()
         Task {
-            await performTranscription(fileURL: recordingURL, apiKey: apiKey)
+            await performTranscription(fileURL: recordingURL, apiKey: apiKey, prompt: prompt)
         }
     }
 
-    private func performTranscription(fileURL: URL, apiKey: String) async {
-        let transcriber = transcriberFactory(apiKey)
+    private func performTranscription(fileURL: URL, apiKey: String, prompt: String?) async {
+        let transcriber = transcriberFactory(apiKey, prompt)
 
         do {
             let text = try await transcriber.transcribe(fileURL: fileURL)
@@ -248,6 +249,13 @@ struct VoicePasteApp: App {
 struct MenuContent: View {
     @State private var apiKeyInput: String = ""
     @State private var hasAPIKey: Bool = false
+    @State private var transcriptionPrompt: String = ""
+    @State private var savedPrompt: String = ""
+    @State private var hasPrompt: Bool = false
+
+    private var isPromptModified: Bool {
+        transcriptionPrompt != savedPrompt
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -286,6 +294,55 @@ struct MenuContent: View {
 
             Divider()
 
+            // Transcription Prompt Settings
+            Text("Transcription Prompt")
+                .font(.headline)
+
+            ZStack(alignment: .topLeading) {
+                if transcriptionPrompt.isEmpty {
+                    Text("Names, terms to improve accuracy...")
+                        .foregroundColor(.gray.opacity(0.6))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 8)
+                }
+                TextEditor(text: $transcriptionPrompt)
+                    .font(.body)
+                    .scrollContentBackground(.hidden)
+            }
+            .frame(minHeight: 60, maxHeight: 120)
+            .background(Color(NSColor.textBackgroundColor))
+            .cornerRadius(5)
+            .overlay(
+                RoundedRectangle(cornerRadius: 5)
+                    .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+            )
+
+            HStack {
+                Button("Save") {
+                    savePrompt()
+                }
+                .disabled(transcriptionPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !hasPrompt)
+
+                Button("Clear") {
+                    clearPrompt()
+                }
+                .disabled(!hasPrompt)
+
+                Spacer()
+
+                if isPromptModified {
+                    Text("Modified")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                } else if hasPrompt {
+                    Text("Saved")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+            }
+
+            Divider()
+
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }
@@ -294,6 +351,7 @@ struct MenuContent: View {
         .frame(width: 260)
         .onAppear {
             loadAPIKey()
+            loadPrompt()
         }
     }
 
@@ -333,6 +391,39 @@ struct MenuContent: View {
             apiKeyInput = ""
         } catch {
             print("[MenuContent] Failed to clear API key: \(error)")
+        }
+    }
+
+    private func loadPrompt() {
+        if let prompt = APIKeyStore.loadPrompt(), !prompt.isEmpty {
+            transcriptionPrompt = prompt
+            savedPrompt = prompt
+            hasPrompt = true
+        } else {
+            transcriptionPrompt = ""
+            savedPrompt = ""
+            hasPrompt = false
+        }
+    }
+
+    private func savePrompt() {
+        do {
+            try APIKeyStore.savePrompt(transcriptionPrompt)
+            savedPrompt = transcriptionPrompt
+            hasPrompt = !transcriptionPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        } catch {
+            print("[MenuContent] Failed to save prompt: \(error)")
+        }
+    }
+
+    private func clearPrompt() {
+        do {
+            try APIKeyStore.deletePrompt()
+            hasPrompt = false
+            transcriptionPrompt = ""
+            savedPrompt = ""
+        } catch {
+            print("[MenuContent] Failed to clear prompt: \(error)")
         }
     }
 }

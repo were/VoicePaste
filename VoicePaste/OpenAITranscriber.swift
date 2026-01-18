@@ -29,11 +29,18 @@ extension TranscriptionService {
 /// OpenAI Whisper transcription client.
 final class OpenAITranscriber: TranscriptionService {
     private let apiKey: String
+    private let prompt: String?
     private let endpoint = "https://api.openai.com/v1/audio/transcriptions"
     private let maxFileSize: Int64 = 25 * 1024 * 1024 // 25MB limit
 
-    init(apiKey: String) {
+    init(apiKey: String, prompt: String? = nil) {
         self.apiKey = apiKey
+        // Trim and normalize empty prompts to nil
+        if let p = prompt?.trimmingCharacters(in: .whitespacesAndNewlines), !p.isEmpty {
+            self.prompt = p
+        } else {
+            self.prompt = nil
+        }
     }
 
     func transcribe(fileURL: URL, model: String = "whisper-1") async throws -> String {
@@ -54,7 +61,7 @@ final class OpenAITranscriber: TranscriptionService {
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
         let audioData = try Data(contentsOf: fileURL)
-        let body = buildMultipartBody(boundary: boundary, audioData: audioData, model: model, filename: fileURL.lastPathComponent)
+        let body = buildMultipartBody(boundary: boundary, audioData: audioData, model: model, filename: fileURL.lastPathComponent, prompt: prompt)
         request.httpBody = body
 
         let (data, response): (Data, URLResponse)
@@ -85,13 +92,20 @@ final class OpenAITranscriber: TranscriptionService {
         return text
     }
 
-    private func buildMultipartBody(boundary: String, audioData: Data, model: String, filename: String) -> Data {
+    private func buildMultipartBody(boundary: String, audioData: Data, model: String, filename: String, prompt: String?) -> Data {
         var body = Data()
 
         // Model field
         body.append("--\(boundary)\r\n")
         body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n")
         body.append("\(model)\r\n")
+
+        // Prompt field (optional)
+        if let prompt = prompt {
+            body.append("--\(boundary)\r\n")
+            body.append("Content-Disposition: form-data; name=\"prompt\"\r\n\r\n")
+            body.append("\(prompt)\r\n")
+        }
 
         // Audio file field
         body.append("--\(boundary)\r\n")

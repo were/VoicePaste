@@ -112,5 +112,34 @@ else
     exit 1
 fi
 
+# Test 10: Verify prompt storage methods exist in APIKeyStore
+echo -n "Test 10: Prompt storage methods in APIKeyStore... "
+if grep -q "savePrompt" "$PROJECT_DIR/VoicePaste/APIKeyStore.swift" && \
+   grep -q "loadPrompt" "$PROJECT_DIR/VoicePaste/APIKeyStore.swift" && \
+   grep -q "deletePrompt" "$PROJECT_DIR/VoicePaste/APIKeyStore.swift"; then
+    echo "PASS"
+else
+    echo "FAIL"
+    exit 1
+fi
+
+# Test 11: Verify OpenAITranscriber supports prompt field
+echo -n "Test 11: OpenAITranscriber prompt support... "
+if grep -q "prompt" "$PROJECT_DIR/VoicePaste/OpenAITranscriber.swift"; then
+    echo "PASS"
+else
+    echo "FAIL"
+    exit 1
+fi
+
+# Test 12: Verify prompt UI exists in menu bar
+echo -n "Test 12: Prompt UI in menu bar... "
+if grep -q "Transcription Prompt\|transcriptionPrompt" "$PROJECT_DIR/VoicePaste/VoicePasteApp.swift"; then
+    echo "PASS"
+else
+    echo "FAIL"
+    exit 1
+fi
+
 echo ""
 echo "=== Build Verification Complete ==="

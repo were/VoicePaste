@@ -68,6 +68,44 @@ The animated indicator provides visual feedback that transcription is in progres
 - Network failure: Check your internet connection
 - Audio too large: Whisper has a 25MB file size limit
 
+## Custom Transcription Prompt
+
+VoicePaste supports custom Whisper prompts to improve transcription accuracy for domain-specific vocabulary. This is useful for:
+
+- **Proper nouns**: Names of people, companies, products
+- **Technical terms**: Industry jargon, acronyms, specialized vocabulary
+- **Foreign words**: Non-English names or phrases commonly used in your context
+
+### Setting a Prompt
+
+1. Click the VoicePaste menu bar icon
+2. Enter your prompt text in the "Transcription Prompt" field
+3. Click "Save" to store the prompt
+
+The prompt persists across app launches and is stored in the same Application Support directory as your API key.
+
+### Prompt Tips
+
+- List words with correct spelling: "Anthropic, Claude, Whisper"
+- Include context for ambiguous terms: "The company Anthropic (not anthropic)"
+- Keep prompts concise but descriptive
+- Leave empty to use default Whisper behavior
+
+### Technical Details
+
+When a prompt is configured:
+- The prompt text is sent to OpenAI's Whisper API via the `prompt` field
+- Whisper uses this as a style/vocabulary guide, not instructions
+- Empty prompts are omitted from API requests (no effect on transcription)
+
+### Manual Verification Checklist
+
+- [ ] Click the menu bar icon and verify the "Transcription Prompt" field is visible
+- [ ] Enter a test prompt and click Save
+- [ ] Quit and relaunch the app, verify the prompt persists
+- [ ] Clear the prompt field and click Save
+- [ ] Verify the prompt field is empty after clearing
+
 ## Menu Bar Indicator
 
 On macOS, VoicePaste displays a mic icon in the menu bar to confirm the app is running. The app runs as an agent (no Dock icon) with a minimal menu containing status text and Quit option.
