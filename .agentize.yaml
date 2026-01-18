@@ -1,5 +1,7 @@
 project:
   name: VoicePaste
+  org: were
+  id: 2
 git:
   default_branch: main
 agentize:
