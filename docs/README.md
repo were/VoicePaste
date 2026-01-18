@@ -1,133 +1,156 @@
-This project aims at providing a voice to text transcription
-on MacOS using OpenAI's Whisper model.
-Because Apple's voice to transcription is a trash, which is
-neither accurate nor language-mixing-friendly.
+# VoicePaste
+
+This project provides voice-to-text transcription on macOS using OpenAI's Whisper model. VoicePaste is designed to be accurate and language-mixing-friendly, addressing limitations in Apple's built-in voice transcription.
 
 ## Features
 
-- Type and hold `<Option> + <Space>` to start recording
-- When released, the audio is sent to OpenAI's Whisper model for transcription
-- Once transcribed, the text is automatically pasted into your current focused app
-- Menu bar indicator shows VoicePaste is running (macOS only)
-- Floating timer window shows recording duration in top-right corner
-- Settings UI in menu bar for API key configuration
-- Local file-based API key storage in Application Support
+- **Quick Recording:** Type and hold `Option+Space` to start recording
+- **Instant Transcription:** Audio is automatically sent to OpenAI's Whisper model
+- **Auto-Paste:** Transcribed text is automatically pasted into your active application
+- **Menu Bar Indicator:** Mic icon in the menu bar confirms VoicePaste is running
+- **Floating Timer:** Real-time duration display in top-right corner while recording
+- **Settings UI:** Configure your API key through the menu bar
+- **Local Storage:** API key is stored securely in Application Support
+
+## Getting Started
+
+### Installation
+
+Build the macOS app using Xcode:
+
+```bash
+xcodebuild \
+  -scheme VoicePaste \
+  -configuration Release \
+  -destination 'platform=macOS' \
+  build
+```
+
+### Configuration
+
+1. Get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Launch VoicePaste (no Dock icon, check the menu bar for the mic icon)
+3. Click the menu bar mic icon
+4. Enter your API key in the settings field
+5. Click "Save"
+
+### Usage
+
+1. Press and hold `Option+Space` in any application
+2. Speak your text (a floating timer shows the duration)
+3. Release `Option+Space` when done
+4. VoicePaste transcribes the audio and automatically pastes the result
 
 ## Permissions
 
-VoicePaste requires the following macOS permissions to function:
-
-### Accessibility Permission
-Required for simulating keyboard events (Cmd+V paste). Grant via:
-**System Settings → Privacy & Security → Accessibility → VoicePaste**
-
-### Input Monitoring Permission
-Required for detecting Option+Space hotkey. Grant via:
-**System Settings → Privacy & Security → Input Monitoring → VoicePaste**
+VoicePaste requires three macOS permissions:
 
 ### Microphone Permission
-Required for voice recording. Grant via:
 **System Settings → Privacy & Security → Microphone → VoicePaste**
 
-The app will request microphone permission on your first recording attempt. If denied, a "Microphone Access Required" dialog will appear with an "Open System Settings" button that takes you directly to the Microphone privacy pane (or Privacy & Security if unavailable).
+Required for voice recording. The app will request this permission on your first recording attempt.
 
-**Note:** If permissions are not granted, VoicePaste will prompt you to open System Settings. You may need to restart the app after granting permissions.
+### Accessibility Permission
+**System Settings → Privacy & Security → Accessibility → VoicePaste**
+
+Required for simulating the Cmd+V paste command to insert transcribed text into your active application.
+
+### Input Monitoring Permission
+**System Settings → Privacy & Security → Input Monitoring → VoicePaste**
+
+Required for detecting the Option+Space hotkey globally across all applications.
+
+## Architecture
+
+VoicePaste is organized into distinct components, each with specific responsibilities:
+
+### Core Components
+
+| Component | Purpose |
+|-----------|---------|
+| [AudioRecorder](../VoicePaste/AudioRecorder.md) | Records audio in Whisper-optimized format (16kHz mono WAV) |
+| [HotkeyManager](../VoicePaste/HotkeyManager.md) | Detects Option+Space globally, manages recording lifecycle |
+| [OpenAITranscriber](../VoicePaste/OpenAITranscriber.md) | Sends audio to OpenAI's Whisper API, handles responses |
+| [APIKeyStore](../VoicePaste/APIKeyStore.md) | Manages persistent API key storage in Application Support |
+
+### UI Components
+
+| Component | Purpose |
+|-----------|---------|
+| [RecordingOverlayView](../VoicePaste/RecordingOverlayView.md) | SwiftUI view displaying timer and transcription status |
+| [RecordingOverlayWindow](../VoicePaste/RecordingOverlayWindow.md) | NSPanel floating window in top-right corner |
+| [VoicePasteApp](../VoicePaste/VoicePasteApp.md) | Main app entry point, state coordination, menu bar UI |
 
 ## Known Limitations
 
-- **Not available on Mac App Store**: Due to CGEventTap requirements, the app must run outside the App Sandbox and cannot be distributed via the Mac App Store.
-- **Permission persistence**: If Accessibility or Input Monitoring permissions are revoked while the app is running, the hotkey listener will stop working. Restart the app after re-granting permissions.
-- **Paste simulation**: Some apps may not respond to simulated Cmd+V events (rare). In such cases, manually paste from clipboard.
+- **Not available on Mac App Store:** Due to CGEventTap requirements for global hotkey detection, the app cannot run in the App Sandbox and is unavailable on the Mac App Store.
 
-## API Key Setup
+- **Permission persistence:** If Accessibility or Input Monitoring permissions are revoked while the app is running, the hotkey listener will stop working. Restart the app after re-granting permissions.
 
-VoicePaste requires an OpenAI API key for transcription:
+- **Paste simulation:** Some applications may not respond to simulated Cmd+V events (rare edge case). In such cases, manually paste from the clipboard.
 
-1. Get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Click the VoicePaste menu bar icon
-3. Enter your API key in the settings field
-4. Click "Save" to store locally
+- **Audio size limit:** The Whisper API has a 25MB file size limit. Typical recordings stay within this limit unless they exceed ~20 minutes at 16kHz.
 
-The API key is stored in a local file at `~/Library/Application Support/VoicePaste/api_key` with owner-only read/write permissions. You can clear the key at any time using the "Clear" button in settings.
+## Security
 
-**Security Note:** The API key is stored in plaintext on disk. This trade-off eliminates repeated Keychain permission prompts while maintaining a simple user experience. The file is protected with restrictive permissions (owner read/write only).
+The API key is stored as **plaintext in a local file** at:
 
-### Transcription Behavior
+```
+~/Library/Application Support/VoicePaste/api_key
+```
 
-When you release Option+Space after recording:
-1. The overlay shows "Transcribing..." with an animated progress indicator while processing
-2. Audio is sent to OpenAI's Whisper API
-3. On success: transcript is pasted to your active application
-4. On failure: an error message is displayed
+### Security Model
 
-The animated indicator provides visual feedback that transcription is in progress, improving perceived latency during API calls.
+- **File permissions:** 0600 (owner read/write only) - other users cannot read the key
+- **Plaintext rationale:** Eliminates repeated Keychain permission dialogs for a better user experience
+- **User control:** You can clear or update the key anytime through the Settings UI
 
-**Common errors:**
-- Missing API key: Configure your key in the menu bar settings
-- Invalid API key: Check your key is correct and has available credits
-- Network failure: Check your internet connection
-- Audio too large: Whisper has a 25MB file size limit
+For detailed information, see [APIKeyStore](../VoicePaste/APIKeyStore.md).
 
-## Menu Bar Indicator
+## Troubleshooting
 
-On macOS, VoicePaste displays a mic icon in the menu bar to confirm the app is running. The app runs as an agent (no Dock icon) with a minimal menu containing status text and Quit option.
+### Microphone Access Required
 
-### Manual Verification Checklist
+If you see a "Microphone Access Required" dialog:
 
-- [ ] Launch the macOS app and confirm a mic icon appears in the menu bar
-- [ ] Confirm no Dock icon appears (LSUIElement enabled)
-- [ ] Click the menu bar icon to open the menu
-- [ ] Verify "VoicePaste is running" status text is displayed
-- [ ] Verify API key input field is displayed
-- [ ] Enter an API key and click Save
-- [ ] Quit and relaunch app, verify key is persisted
-- [ ] Click Clear to remove the API key
-- [ ] Use Quit menu item to exit the app
+1. Open System Settings → Privacy & Security → Microphone
+2. Verify VoicePaste is in the list and enabled
+3. If not listed, you may need to restart VoicePaste
 
-## Audio Recording
+### Hotkey Not Working
 
-VoicePaste records audio in a format optimized for OpenAI's Whisper transcription:
-- **Format:** WAV (PCM)
-- **Sample Rate:** 16kHz
-- **Channels:** Mono
-- **Bit Depth:** 16-bit
+If Option+Space doesn't trigger recording:
 
-When you hold Option+Space, the app:
-1. Requests microphone permission if not already granted
-2. Starts recording to a temporary WAV file
-3. Shows the recording overlay and timer
-4. Stops recording when you release the keys
-5. Saves the audio file for transcription
+1. Verify Input Monitoring permission is granted: System Settings → Privacy & Security → Input Monitoring
+2. Verify Accessibility permission is granted: System Settings → Privacy & Security → Accessibility
+3. Restart VoicePaste if permissions were recently changed
+4. Try the hotkey in a different application
 
-The temporary recording file is automatically replaced on each new recording.
+### Transcription Fails
 
-## Floating Timer Window
+If transcription doesn't work or returns errors:
 
-When you press Option+Space to start recording, a floating timer window appears in the top-right corner of your screen. The timer displays the recording duration in mm:ss format and updates every second.
+1. **Missing or invalid API key:** Check your key in the menu bar settings
+2. **Network connection:** Verify you have internet connectivity
+3. **API credits:** Ensure your OpenAI account has available API credits
+4. **Audio too large:** Ensure your recording is under ~20 minutes
 
-The window:
-- Appears without stealing focus from your current application
-- Shows real-time duration while recording
-- Displays the final duration briefly when recording stops
-- Fades out automatically after recording ends
-- Re-anchors to screen edge when content changes (e.g., switching to "Transcribing...")
+For more details, see [OpenAITranscriber](../VoicePaste/OpenAITranscriber.md).
 
-### Manual Verification Checklist
+### Text Not Pasting
 
-- [ ] Press Option+Space and confirm the timer window appears in the top-right corner
-- [ ] Verify the timer starts at 00:00 and increments every second
-- [ ] Confirm the current application retains focus (window does not steal focus)
-- [ ] Release Option+Space and verify the final duration is displayed briefly
-- [ ] Verify "Transcribing..." overlay is fully visible and not truncated at screen edge
-- [ ] Confirm the timer window fades out and disappears after recording stops
+If the transcribed text doesn't automatically appear:
+
+1. Verify Accessibility permission is granted
+2. Some applications may not support automated paste (rare)
+3. The text is always in your clipboard, so you can manually paste (Cmd+V) if needed
 
 ## Future Work
 
-### Streaming Transcription (Experimental)
+### Streaming Transcription
 
-Full real-time streaming transcription using OpenAI's Realtime API is considered experimental and gated on:
+Real-time streaming transcription using OpenAI's Realtime API is planned but currently experimental. This would require significant architectural changes and additional dependencies. See [OpenAITranscriber](../VoicePaste/OpenAITranscriber.md) for details.
 
-1. **Verified Documentation**: Official OpenAI Realtime transcription documentation must be confirmed
-2. **Proof of Concept**: A minimal POC must demonstrate working streaming transcription before any integration
+## Development
 
-The current batch Whisper workflow provides reliable transcription with the animated progress indicator for feedback. Streaming integration would require significant changes (~850+ LOC) including AVAudioEngine, audio resampling, WebSocket handling, and delta event processing.
+For developers working on VoicePaste, refer to the component documentation above for implementation details specific to each module.
